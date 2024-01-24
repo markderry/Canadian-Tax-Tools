@@ -11,39 +11,93 @@ library(shiny)
 library(data.table)
 source("smith_analysis.R")
 
+employment_income <- c(50000, 100000, 150000, 200000, 250000, 300000, 350000, 400000)
+home_value <- c(500000, 1000000, 1500000, 2000000, 2500000, 3000000)
+mortgage_balance <- c(100000, 200000, 300000, 400000, 500000, 1000000, 1500000, 2000000, 2500000)
+loc_interest_rate <- c(0.03, 0.04, 0.05, 0.06, 0.07, 0.08)
+dividend_yeild <- c(0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.10, 0.11, 0.12)
+dividend_type_split <- c(0, 0.25, 0.5, 0.75, 1)
+
+
 # Define UI for application that draws a histogram
 ui <- fluidPage(
   
   # Application title
   titlePanel("Modified Smith Maneuver"),
-  
-  # Sidebar with a slider input for number of bins 
-  # create sidebar
-  sidebarLayout(
-    sidebarPanel(width = 2,
-      # Input variables
-      numericInput("value_of_home", label = "Value of Home:", value = 1000000),
-      numericInput("mortage", label = "Mortgage:", value = 500000),
-      # numericInput("mortgage_interest", label = "Mortgage Interest:", value = 0.06),
-      # numericInput("mortgage_years", label = "Mortgage Years:", value = 20),
-      numericInput("line_of_credit_interest", label = "Line of Credit Interest:", value = 0.07),
-      numericInput("investment_yeild", label = "Investment Yeild:", value = 0.09),
-      numericInput("income", label = "Employment Income:", value = 100000),
-      numericInput("yearly_prepayment", label = "Yearly Prepayment:", value = 0),
-      # actionButton("run", "Run")
-    ),
-    
-    # Show a plot of the generated distribution
-    mainPanel(
-      tableOutput("results_table"),
-      # textOutput("value_of_home"),
-      # textOutput("mortage"),
-      # textOutput("mortgage_interest"),
-      # textOutput("mortgage_years"),
-      # textOutput("line_of_credit_interest"),
-      # textOutput("investment_yeild"),
-      # textOutput("income"),
-      # textOutput("yearly_prepayment")
+  tabPanel(
+    "Custom Inputs",
+    # Sidebar with a slider input for number of bins 
+    # create sidebar
+    sidebarLayout(
+      sidebarPanel(width = 2,
+                   # Input variables
+                   
+                   numericInput("value_of_home", label = "Value of Home:", value = 1000000),
+                   numericInput("mortage", label = "Mortgage:", value = 500000),
+                   # numericInput("mortgage_interest", label = "Mortgage Interest:", value = 0.06),
+                   # numericInput("mortgage_years", label = "Mortgage Years:", value = 20),
+                   numericInput("line_of_credit_interest", label = "Line of Credit Interest:", value = 0.07),
+                   numericInput("investment_yeild", label = "Investment Yeild:", value = 0.09),
+                   numericInput("income", label = "Employment Income:", value = 100000),
+                   # numericInput("yearly_prepayment", label = "Yearly Prepayment:", value = 0),
+                   # actionButton("run", "Run")
+      ),
+      
+      # Show a plot of the generated distribution
+      mainPanel(
+        tableOutput("results_table"),
+        # textOutput("value_of_home"),
+        # textOutput("mortage"),
+        # textOutput("mortgage_interest"),
+        # textOutput("mortgage_years"),
+        # textOutput("line_of_credit_interest"),
+        # textOutput("investment_yeild"),
+        # textOutput("income"),
+        # textOutput("yearly_prepayment")
+      )
+    )
+  ),
+  tabPanel(
+    "Solution Space",
+    # filter panel
+    sidebarLayout(
+      sidebarPanel(width = 2,
+                   selectInput(
+                     "employment_income_selection",
+                     label = "Employment Income",
+                     choices = employment_income
+                   ),
+                   selectInput(
+                     "home_value_selection",
+                     label = "Home Value",
+                     choices = home_value
+                   ),
+                   selectInput(
+                     "mortgage_balance_selection",
+                     label = "Mortgage Balance",
+                     choices = mortgage_balance
+                   ),
+                   selectInput(
+                     "loc_interest_rate_selection",
+                     label = "LOC Interest Rate",
+                     choices = loc_interest_rate
+                   ),
+                   selectInput(
+                     "dividend_yeild_selection",
+                     label = "Dividend Yeild",
+                     choices = dividend_yeild
+                   ),
+                   selectInput(
+                     "dividend_type_split_selection",
+                     label = "Dividend Type Split",
+                     choices = dividend_type_split
+                   )
+      ),
+      
+      # Show a plot of the generated distribution
+      mainPanel(
+      
+      )
     )
   )
 )
@@ -62,7 +116,7 @@ server <- function(input, output, session) {
   output$line_of_credit_interest <- renderText({ input$line_of_credit_interest })
   output$investment_yeild <- renderText({ input$investment_yeild })
   output$income <- renderText({ input$income })
-  output$yearly_prepayment <- renderText({ input$yearly_prepayment })
+  # output$yearly_prepayment <- renderText({ input$yearly_prepayment })
   
   
   # create table
@@ -74,7 +128,7 @@ server <- function(input, output, session) {
     loc_ballance <- 0.65 * (home_value - mortgage_balance)
     dividend_yeild <- input$investment_yeild
     
-    for (i in 1:10) {
+    for (i in 1:2) {
       if (i == 1) {
         interest_expense <- loc_interest_rate * loc_ballance
         dividend_income <- loc_ballance * dividend_yeild
@@ -83,10 +137,10 @@ server <- function(input, output, session) {
                                                 interest_expense = 0, 
                                                 dividend_type_split = 0.5)
       } else {
-        loc_ballance <- loc_ballance + scenarios$sm_effective_value[i - 1]
-        if (loc_ballance > 0.65 * (home_value)) {
-          loc_ballance <- 0.65 * (home_value)
-        }
+        # loc_ballance <- loc_ballance + scenarios$sm_effective_value[i - 1]
+        # if (loc_ballance > 0.65 * (home_value)) {
+        #   loc_ballance <- 0.65 * (home_value)
+        # }
         interest_expense <- loc_interest_rate * loc_ballance
         dividend_income <- loc_ballance * dividend_yeild
         scenarios <- rbind(scenarios, calculate_tax_liability_sm(employment_income = employment_income, 
