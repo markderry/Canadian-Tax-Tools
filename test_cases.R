@@ -50,9 +50,9 @@ toc()
 
 # write output to rds
 saveRDS(output, "output.rds")
+# read output from rds
+out <- readRDS("output.rds")
 
-out <- cbind(test_cases, output)
-out[, which(duplicated(names(out))) := NULL]
 # plot results 
 library(ggplot2)
 plot <- out[employment_income == 350000 & 
@@ -60,9 +60,31 @@ plot <- out[employment_income == 350000 &
                  dividend_yeild == 0.11 & 
                  dividend_type_split == 0.25, ]
 
-plot
 # plot 1 group by loc_interest_rate
-
 ggplot(plot, aes(x = loc_balance, y = sm_effective_value, group = loc_interest_rate)) + 
-  geom_point(aes(color=loc_interest_rate)) +
-  geom_line(aes(color=loc_interest_rate)) 
+  geom_point(aes(color = loc_interest_rate)) +
+  geom_line(aes(color = loc_interest_rate)) 
+
+# convert to plotly interactive plot
+library(plotly)
+plotly_plot <- plot_ly(plot, x = ~loc_balance, y = ~sm_effective_value, color = ~loc_interest_rate, type = 'scatter', mode = 'lines+markers', split = ~loc_interest_rate)
+
+# plot 2 group by dividend_type_split 
+ggplot(plot, aes(x = loc_balance, y = sm_effective_value, group = dividend_type_split)) + 
+  geom_point(aes(color = dividend_type_split)) +
+  geom_line(aes(color = dividend_type_split))
+
+# plot 3 group by dividend_yeild
+ggplot(plot, aes(x = loc_balance, y = sm_effective_value, group = dividend_yeild)) + 
+  geom_point(aes(color = dividend_yeild)) +
+  geom_line(aes(color = dividend_yeild))
+
+# plot 4 group by home_value
+ggplot(plot, aes(x = loc_balance, y = sm_effective_value, group = home_value)) + 
+  geom_point(aes(color = home_value)) +
+  geom_line(aes(color = home_value))
+
+# plot 5 group by employment_income
+ggplot(plot, aes(x = loc_balance, y = sm_effective_value, group = employment_income)) + 
+  geom_point(aes(color = employment_income)) +
+  geom_line(aes(color = employment_income))

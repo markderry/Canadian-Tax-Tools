@@ -1,15 +1,9 @@
-#
-# This is a Shiny web application. You can run the application by clicking
-# the 'Run App' button above.
-#
-# Find out more about building applications with Shiny here:
-#
-#    https://shiny.posit.co/
-#
-
 library(shiny)
 library(data.table)
+library(plotly)
 source("smith_analysis.R")
+
+options(scipen = 999)
 
 employment_income <- c(50000, 100000, 150000, 200000, 250000, 300000, 350000, 400000)
 home_value <- c(500000, 1000000, 1500000, 2000000, 2500000, 3000000)
@@ -24,79 +18,71 @@ ui <- fluidPage(
   
   # Application title
   titlePanel("Modified Smith Maneuver"),
-  tabPanel(
-    "Custom Inputs",
-    # Sidebar with a slider input for number of bins 
-    # create sidebar
-    sidebarLayout(
-      sidebarPanel(width = 2,
-                   # Input variables
-                   
-                   numericInput("value_of_home", label = "Value of Home:", value = 1000000),
-                   numericInput("mortage", label = "Mortgage:", value = 500000),
-                   # numericInput("mortgage_interest", label = "Mortgage Interest:", value = 0.06),
-                   # numericInput("mortgage_years", label = "Mortgage Years:", value = 20),
-                   numericInput("line_of_credit_interest", label = "Line of Credit Interest:", value = 0.07),
-                   numericInput("investment_yeild", label = "Investment Yeild:", value = 0.09),
-                   numericInput("income", label = "Employment Income:", value = 100000),
-                   # numericInput("yearly_prepayment", label = "Yearly Prepayment:", value = 0),
-                   # actionButton("run", "Run")
-      ),
-      
-      # Show a plot of the generated distribution
-      mainPanel(
-        tableOutput("results_table"),
-        # textOutput("value_of_home"),
-        # textOutput("mortage"),
-        # textOutput("mortgage_interest"),
-        # textOutput("mortgage_years"),
-        # textOutput("line_of_credit_interest"),
-        # textOutput("investment_yeild"),
-        # textOutput("income"),
-        # textOutput("yearly_prepayment")
+  
+  tabsetPanel(
+    tabPanel(
+      "Custom Inputs",
+      # Sidebar with a slider input for number of bins 
+      # create sidebar
+      sidebarLayout(
+        sidebarPanel(width = 2,
+                     # Input variables
+                     numericInput("employment_income", label = "Employment Income:", value = 100000),
+                     numericInput("home_value", label = "Home Value:", value = 1000000),
+                     numericInput("mortgage_balance", label = "Mortgage Balance:", value = 500000),
+                     numericInput("dividend_type_split", label = "Dividend Type Split:", value = 0.5),
+                     numericInput("dividend_yeild", label = "Dividend Yeild:", value = 0.09),
+                     numericInput("loc_interest_rate", label = "LOC Interest Rate:", value = 0.07)
+        ),
+        
+        # Show a plot of the generated distribution
+        mainPanel(
+          tableOutput("results_table"),
+        )
       )
-    )
-  ),
-  tabPanel(
-    "Solution Space",
-    # filter panel
-    sidebarLayout(
-      sidebarPanel(width = 2,
-                   selectInput(
-                     "employment_income_selection",
-                     label = "Employment Income",
-                     choices = employment_income
-                   ),
-                   selectInput(
-                     "home_value_selection",
-                     label = "Home Value",
-                     choices = home_value
-                   ),
-                   selectInput(
-                     "mortgage_balance_selection",
-                     label = "Mortgage Balance",
-                     choices = mortgage_balance
-                   ),
-                   selectInput(
-                     "loc_interest_rate_selection",
-                     label = "LOC Interest Rate",
-                     choices = loc_interest_rate
-                   ),
-                   selectInput(
-                     "dividend_yeild_selection",
-                     label = "Dividend Yeild",
-                     choices = dividend_yeild
-                   ),
-                   selectInput(
-                     "dividend_type_split_selection",
-                     label = "Dividend Type Split",
-                     choices = dividend_type_split
-                   )
-      ),
-      
-      # Show a plot of the generated distribution
-      mainPanel(
-      
+    ),
+    tabPanel(
+      "Solution Space",
+      # filter panel
+      sidebarLayout(
+        sidebarPanel(width = 2,
+                     selectInput(
+                       "employment_income_selection",
+                       label = "Employment Income",
+                       choices = employment_income
+                     ),
+                     selectInput(
+                       "home_value_selection",
+                       label = "Home Value",
+                       choices = home_value
+                     ),
+                     selectInput(
+                       "mortgage_balance_selection",
+                       label = "Mortgage Balance",
+                       choices = mortgage_balance
+                     ),
+                     selectInput(
+                       "loc_interest_rate_selection",
+                       label = "LOC Interest Rate",
+                       choices = loc_interest_rate
+                     ),
+                     selectInput(
+                       "dividend_yeild_selection",
+                       label = "Dividend Yeild",
+                       choices = dividend_yeild
+                     ),
+                     selectInput(
+                       "dividend_type_split_selection",
+                       label = "Dividend Type Split",
+                       choices = dividend_type_split
+                     )
+        ),
+        
+        # Show a plot of the generated distribution
+        mainPanel(
+          # show plot and fill main panel
+          plotlyOutput(outputId = "plot")
+        )
       )
     )
   )
@@ -109,44 +95,34 @@ server <- function(input, output, session) {
     input$run
   )
   
-  output$value_of_home <- renderText({as.character(input$value_of_home)})
-  output$mortage <- renderText({ input$mortage })
-  output$mortgage_interest <- renderText({ input$mortgage_interest })
-  output$mortgage_years <- renderText({ input$mortgage_years })
-  output$line_of_credit_interest <- renderText({ input$line_of_credit_interest })
-  output$investment_yeild <- renderText({ input$investment_yeild })
-  output$income <- renderText({ input$income })
-  # output$yearly_prepayment <- renderText({ input$yearly_prepayment })
-  
-  
   # create table
   output$results_table <- renderTable({
-    employment_income <- input$income
-    home_value <- input$value_of_home
-    mortgage_balance <- input$mortage
-    loc_interest_rate <- input$line_of_credit_interest
+    employment_income <- input$employment_income
+    home_value <- input$home_value
+    mortgage_balance <- input$mortgage_balance
+    loc_interest_rate <- input$loc_interest_rate
     loc_ballance <- 0.65 * (home_value - mortgage_balance)
-    dividend_yeild <- input$investment_yeild
+    dividend_yeild <- input$dividend_yeild
+    dividend_type_split <- input$dividend_type_split
     
     for (i in 1:2) {
       if (i == 1) {
         interest_expense <- loc_interest_rate * loc_ballance
         dividend_income <- loc_ballance * dividend_yeild
-        scenarios <- calculate_tax_liability_sm(employment_income = employment_income, 
-                                                dividend_income = 0, 
-                                                interest_expense = 0, 
-                                                dividend_type_split = 0.5)
+        scenarios <- calculate_tax_liability_sm(employment_income = employment_income,
+                                                home_value = 0,
+                                                mortgage_balance = 0,
+                                                dividend_yeild = 0,
+                                                dividend_type_split = 0,
+                                                loc_interest_rate = 0)
       } else {
-        # loc_ballance <- loc_ballance + scenarios$sm_effective_value[i - 1]
-        # if (loc_ballance > 0.65 * (home_value)) {
-        #   loc_ballance <- 0.65 * (home_value)
-        # }
-        interest_expense <- loc_interest_rate * loc_ballance
-        dividend_income <- loc_ballance * dividend_yeild
-        scenarios <- rbind(scenarios, calculate_tax_liability_sm(employment_income = employment_income, 
-                                                                 dividend_income = dividend_income, 
-                                                                 dividend_type_split = 0.5, 
-                                                                 interest_expense = interest_expense)
+        scenarios <- rbind(scenarios, 
+                           calculate_tax_liability_sm(employment_income = employment_income,
+                                                      home_value = home_value,
+                                                      mortgage_balance = mortgage_balance,
+                                                      dividend_yeild = dividend_yeild,
+                                                      dividend_type_split = dividend_type_split,
+                                                      loc_interest_rate = loc_interest_rate)
         )
       }
     }
@@ -163,6 +139,21 @@ server <- function(input, output, session) {
   striped = TRUE,
   hover = TRUE,
   width = "100%"
+  )
+  output$plot <- renderPlotly(
+    # plot results 
+     plot_ly(out[employment_income == input$employment_income_selection & 
+                                 home_value == input$home_value_selection &
+                                 dividend_yeild == input$dividend_yeild_selection &
+                                 dividend_type_split == input$dividend_type_split_selection, ], 
+                           x = ~loc_balance, 
+                           y = ~sm_effective_value, 
+                           color = ~loc_interest_rate, 
+                           type = 'scatter', 
+                           mode = 'lines+markers', 
+                           split = ~loc_interest_rate, 
+                           height = 800
+             )
   )
   
 }
